@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f766e" />
+  <title>FreshTrack — Food Inventory</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="logo">🥬</span>
+      <div>
+        <h1>FreshTrack</h1>
+        <p class="tag">Food inventory · <span id="today">—</span></p>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="products">Products</button>
+    <button class="tab" data-tab="ledger">Ledger</button>
+  </nav>
+
+  <main>
+    <section id="dashboard" class="panel active">
+      <div class="metrics" id="metrics"></div>
+      <h2>Alerts</h2>
+      <div id="alerts" class="alerts"></div>
+    </section>
+
+    <section id="products" class="panel">
+      <div id="product-list"></div>
+    </section>
+
+    <section id="ledger" class="panel">
+      <h2>Stock movement ledger</h2>
+      <div id="movements"></div>
+    </section>
+  </main>
+
+  <!-- Action sheet (receive / sell / batches) -->
+  <div id="sheet" class="sheet-backdrop" hidden>
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3 id="sheet-title">—</h3>
+        <button id="sheet-close" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <div id="sheet-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

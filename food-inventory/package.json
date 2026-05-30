@@ -1,0 +1,15 @@
+{
+  "name": "freshtrack",
+  "version": "0.1.0",
+  "description": "FreshTrack — food inventory management prototype",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "seed": "node src/seed.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "express": "^4.21.2"
+  }
+}

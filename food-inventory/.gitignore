@@ -1,0 +1,5 @@
+node_modules/
+freshtrack.db
+freshtrack.db-shm
+freshtrack.db-wal
+*.log
