@@ -1,62 +1,58 @@
-import Database from 'better-sqlite3';
+// Zero-dependency JSON-file store. No native modules — runs anywhere Node runs
+// (including Termux on Android). Data is held in memory and persisted to a
+// single JSON file. The query surface is intentionally tiny: each "table" is an
+// array of plain objects, plus a couple of helpers.
+
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const dbPath = process.env.FRESHTRACK_DB || join(__dirname, '..', 'freshtrack.db');
+const dbPath = process.env.FRESHTRACK_DB || join(__dirname, '..', 'freshtrack.json');
 
-export const db = new Database(dbPath);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+const EMPTY = () => ({
+  category: [],
+  supplier: [],
+  product: [],
+  stock_batch: [],
+  stock_movement: [],
+  _seq: {},
+});
 
-export function initSchema() {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS category (
-      id        INTEGER PRIMARY KEY,
-      name      TEXT NOT NULL,
-      parent_id INTEGER REFERENCES category(id)
-    );
+export const store = existsSync(dbPath)
+  ? JSON.parse(readFileSync(dbPath, 'utf8'))
+  : EMPTY();
 
-    CREATE TABLE IF NOT EXISTS supplier (
-      id             INTEGER PRIMARY KEY,
-      name           TEXT NOT NULL,
-      contact_email  TEXT,
-      lead_time_days INTEGER NOT NULL DEFAULT 3
-    );
+let saveTimer = null;
+export function save() {
+  // debounce so a burst of writes (e.g. a multi-batch sale) hits disk once
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => writeFileSync(dbPath, JSON.stringify(store, null, 2)), 25);
+}
+export function saveNow() {
+  clearTimeout(saveTimer);
+  writeFileSync(dbPath, JSON.stringify(store, null, 2));
+}
 
-    CREATE TABLE IF NOT EXISTS product (
-      id             INTEGER PRIMARY KEY,
-      sku            TEXT NOT NULL UNIQUE,
-      name           TEXT NOT NULL,
-      category_id    INTEGER REFERENCES category(id),
-      supplier_id    INTEGER REFERENCES supplier(id),
-      unit           TEXT NOT NULL DEFAULT 'each',
-      unit_price     REAL NOT NULL DEFAULT 0,
-      perishable     INTEGER NOT NULL DEFAULT 1,
-      shelf_life_days INTEGER NOT NULL DEFAULT 7,
-      reorder_point  INTEGER NOT NULL DEFAULT 10,
-      reorder_qty    INTEGER NOT NULL DEFAULT 50,
-      storage        TEXT NOT NULL DEFAULT 'AMBIENT'
-    );
+export function reset() {
+  Object.assign(store, EMPTY());
+  saveNow();
+}
 
-    CREATE TABLE IF NOT EXISTS stock_batch (
-      id              INTEGER PRIMARY KEY,
-      product_id      INTEGER NOT NULL REFERENCES product(id),
-      lot_number      TEXT NOT NULL,
-      received_date   TEXT NOT NULL,
-      expiration_date TEXT,
-      quantity        INTEGER NOT NULL,
-      cost_price      REAL NOT NULL DEFAULT 0
-    );
+// Insert a row, assigning an auto-increment id per table. Returns the row.
+export function insert(table, row) {
+  const next = (store._seq[table] || 0) + 1;
+  store._seq[table] = next;
+  const record = { id: next, ...row };
+  store[table].push(record);
+  save();
+  return record;
+}
 
-    CREATE TABLE IF NOT EXISTS stock_movement (
-      id          INTEGER PRIMARY KEY,
-      batch_id    INTEGER REFERENCES stock_batch(id),
-      product_id  INTEGER NOT NULL REFERENCES product(id),
-      type        TEXT NOT NULL,           -- RECEIPT | SALE | ADJUSTMENT | WASTE_SPOILAGE
-      quantity    INTEGER NOT NULL,        -- signed: + adds, - removes
-      reason      TEXT,
-      occurred_at TEXT NOT NULL
-    );
-  `);
+export const all = (table) => store[table];
+export const find = (table, fn) => store[table].find(fn);
+export const filter = (table, fn) => store[table].filter(fn);
+
+export function isEmpty() {
+  return store.product.length === 0;
 }

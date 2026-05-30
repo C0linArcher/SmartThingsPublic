@@ -1,8 +1,10 @@
 # FreshTrack 🥬
 
 A food inventory management prototype for a company selling food and food
-supplies. Built to run anywhere with zero external services — Node + an embedded
-SQLite database, with a mobile-first single-page UI.
+supplies. Built to run anywhere with **zero external services and zero native
+dependencies** — plain Node + Express over a JSON-file data store, with a
+mobile-first single-page UI. No compilers needed, so it runs cleanly on a phone
+(e.g. Termux on Android).
 
 It implements the domain model in [`docs/uml.md`](docs/uml.md), focusing on the
 two things that make *food* inventory different from generic inventory:
@@ -17,7 +19,19 @@ npm start
 # open http://localhost:3000
 ```
 
-The database auto-seeds on first start with realistic demo data (9 products
+### On your phone (Termux)
+
+```bash
+pkg install git nodejs
+git clone --depth 1 --single-branch \
+  --branch claude/food-inventory-uml-c14Ig \
+  https://github.com/C0linArcher/SmartThingsPublic.git
+cd SmartThingsPublic/food-inventory
+npm install && npm start
+# open http://localhost:3000 in your phone's browser
+```
+
+The store auto-seeds on first start with realistic demo data (9 products
 across dairy, produce, bakery, dry goods, and packaging — including some
 deliberately low-stock, expiring-soon, and expired lots so the dashboard has
 something to show). To wipe and reseed:
@@ -58,9 +72,11 @@ npm run seed
 
 ## Stack
 
-- **Backend** — Node 22, Express, `better-sqlite3` (synchronous, embedded).
+- **Backend** — Node, Express. Only one runtime dependency (`express`).
 - **Frontend** — vanilla HTML/CSS/JS, no build step, mobile-first.
-- **Data** — single SQLite file (`freshtrack.db`), created and seeded on first run.
+- **Data** — a tiny in-memory store persisted to a single JSON file
+  (`freshtrack.json`), created and seeded on first run. No native modules, so
+  `npm install` never compiles anything.
 
 ## Layout
 
@@ -69,7 +85,7 @@ food-inventory/
 ├── docs/            UML class diagram, enums, design notes (+ rendered PNG)
 ├── public/          Single-page UI (index.html, styles.css, app.js)
 └── src/
-    ├── db.js        SQLite connection + schema
+    ├── db.js        JSON-file store + tiny query helpers
     ├── seed.js      Demo data
     └── server.js    Express API + batch-status / FEFO logic
 ```
