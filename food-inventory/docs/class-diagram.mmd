@@ -1,0 +1,135 @@
+classDiagram
+    direction LR
+
+    class User {
+        +UUID id
+        +String name
+        +String email
+        +Role role
+        +Boolean active
+        +login(pw) Session
+        +hasPermission(p) Boolean
+    }
+    class Supplier {
+        +UUID id
+        +String name
+        +String contactEmail
+        +String phone
+        +String address
+        +Int leadTimeDays
+        +rating() Float
+    }
+    class Category {
+        +UUID id
+        +String name
+        +UUID parentId
+        +path() String
+    }
+    class Product {
+        +UUID id
+        +String sku
+        +String name
+        +String barcode
+        +UnitOfMeasure unit
+        +Money unitPrice
+        +Boolean perishable
+        +Int shelfLifeDays
+        +Int reorderPoint
+        +Int reorderQty
+        +StorageType storage
+        +totalOnHand() Int
+        +needsReorder() Boolean
+    }
+    class Warehouse {
+        +UUID id
+        +String name
+        +String address
+        +capacity() Int
+    }
+    class StorageZone {
+        +UUID id
+        +String label
+        +StorageType type
+        +Float minTempC
+        +Float maxTempC
+    }
+    class StockBatch {
+        +UUID id
+        +String lotNumber
+        +Date receivedDate
+        +Date expirationDate
+        +Int quantity
+        +Money costPrice
+        +daysUntilExpiry() Int
+        +isExpired() Boolean
+        +status() BatchStatus
+    }
+    class StockMovement {
+        +UUID id
+        +MovementType type
+        +Int quantity
+        +DateTime occurredAt
+        +String reason
+    }
+    class PurchaseOrder {
+        +UUID id
+        +String poNumber
+        +OrderStatus status
+        +Date orderedAt
+        +Date expectedAt
+        +total() Money
+        +receive(lines) void
+    }
+    class PurchaseOrderLine {
+        +UUID id
+        +Int quantity
+        +Money unitCost
+        +lineTotal() Money
+    }
+    class Customer {
+        +UUID id
+        +String name
+        +String email
+        +CustomerType type
+    }
+    class SalesOrder {
+        +UUID id
+        +String soNumber
+        +OrderStatus status
+        +Date placedAt
+        +total() Money
+        +fulfill() void
+    }
+    class SalesOrderLine {
+        +UUID id
+        +Int quantity
+        +Money unitPrice
+        +lineTotal() Money
+    }
+    class Alert {
+        +UUID id
+        +AlertType type
+        +String message
+        +Boolean acknowledged
+        +DateTime createdAt
+    }
+
+    Category "1" o-- "0..*" Category : subcategories
+    Category "1" --> "0..*" Product : classifies
+    Supplier "1" --> "0..*" Product : supplies
+    Warehouse "1" *-- "1..*" StorageZone : contains
+    StorageZone "1" --> "0..*" StockBatch : stores
+    Product "1" --> "0..*" StockBatch : tracked as
+    StockBatch "1" --> "0..*" StockMovement : logs
+    Supplier "1" --> "0..*" PurchaseOrder : receives
+    PurchaseOrder "1" *-- "1..*" PurchaseOrderLine : contains
+    PurchaseOrderLine "0..*" --> "1" Product : orders
+    PurchaseOrder "1" ..> "0..*" StockBatch : produces
+    Customer "1" --> "0..*" SalesOrder : places
+    SalesOrder "1" *-- "1..*" SalesOrderLine : contains
+    SalesOrderLine "0..*" --> "1" Product : sells
+    SalesOrder "1" ..> "0..*" StockMovement : produces
+    Product "1" --> "0..*" Alert : raises
+    StockBatch "1" --> "0..*" Alert : raises
+    User "1" --> "0..*" PurchaseOrder : creates
+    User "1" --> "0..*" StockMovement : performs
